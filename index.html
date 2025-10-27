@@ -516,16 +516,13 @@
 
   <script>
     // ==========================
-    // 🔑 CONFIGURACIÓN DE SUPABASE
+    // 🔑 CONFIGURACIÓN DE SUPABASE (YA INTEGRADA)
     // ==========================
-    const SUPABASE_URL = 'https://xxxxxx.supabase.co'; // ← ¡REEMPLAZA POR TU URL!
-    const SUPABASE_ANON_KEY = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; // ← ¡REEMPLAZA POR TU CLAVE!
+    const SUPABASE_URL = 'https://hmyxiighjsyfgjcrsuil.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhteXhpaWdoanN5ZmdqY3JzdWlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1NzUyODEsImV4cCI6MjA3NzE1MTI4MX0.GxuPLLNQMbjcFlyFRHeJti6h6cwIQy_OU-n8i9XH-sk';
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ==========================
-    // 🧠 LÓGICA DEL FORMULARIO
-    // ==========================
     document.addEventListener('DOMContentLoaded', () => {
       // WhatsApp toggle
       document.querySelectorAll('input[name="whatsapp"]').forEach(radio => {
@@ -599,30 +596,30 @@
         div.className = 'experience-section';
         const n = ++idx[type];
 
-        // Botón eliminar
+        // Botón eliminar (type="button" para evitar validación)
         const btnEliminar = document.createElement('button');
+        btnEliminar.type = 'button';
         btnEliminar.className = 'btn-eliminar';
         btnEliminar.textContent = '✕';
         btnEliminar.onclick = () => div.remove();
-
         div.appendChild(btnEliminar);
 
         if (type === 'no-mineras') {
           div.innerHTML += `
             <h3>Empresa ${n}</h3>
-            <label>Nombre</label><input type="text" name="empresa_no_minera_${n}" required>
-            <label>Tarea</label><input type="text" name="tarea_no_minera_${n}" required>
-            <label>Desde <small>(MM/AAAA)</small></label><input type="month" name="desde_no_minera_${n}" required>
-            <label>Hasta <small>(MM/AAAA)</small></label><input type="month" name="hasta_no_minera_${n}" required>
+            <label>Nombre</label><input type="text" name="empresa_no_minera_${n}">
+            <label>Tarea</label><input type="text" name="tarea_no_minera_${n}">
+            <label>Desde <small>(MM/AAAA)</small></label><input type="month" name="desde_no_minera_${n}">
+            <label>Hasta <small>(MM/AAAA)</small></label><input type="month" name="hasta_no_minera_${n}">
             <label>Referencias</label><input type="text" name="ref_no_minera_${n}" placeholder="Tel o email">
           `;
         } else if (type === 'mineras') {
           div.innerHTML += `
             <h3>Empresa Minera ${n}</h3>
-            <label>Nombre</label><input type="text" name="empresa_minera_${n}" required>
-            <label>Desde <small>(MM/AAAA)</small></label><input type="month" name="desde_minera_${n}" required>
-            <label>Hasta <small>(MM/AAAA)</small></label><input type="month" name="hasta_minera_${n}" required>
-            <label>Tareas en minería</label><textarea name="tareas_minera_${n}" required></textarea>
+            <label>Nombre</label><input type="text" name="empresa_minera_${n}">
+            <label>Desde <small>(MM/AAAA)</small></label><input type="month" name="desde_minera_${n}">
+            <label>Hasta <small>(MM/AAAA)</small></label><input type="month" name="hasta_minera_${n}">
+            <label>Tareas en minería</label><textarea name="tareas_minera_${n}"></textarea>
             <label>Referencias</label><input type="text" name="ref_minera_${n}" placeholder="supervisor@minera.com">
           `;
         }
@@ -636,9 +633,7 @@
       if (btnNoMinera) btnNoMinera.addEventListener('click', () => addEmpresa('no-mineras'));
       if (btnMinera) btnMinera.addEventListener('click', () => addEmpresa('mineras'));
 
-      // ==========================
-      // 📤 ENVIAR A SUPABASE
-      // ==========================
+      // 📤 Envío a Supabase
       document.getElementById('formularioTrabajador').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -671,7 +666,6 @@
 
           alert('✅ ¡Registro exitoso! Tus datos ya están en la bolsa de trabajo.');
           form.reset();
-          // Resetear secciones
           document.getElementById('seccion-no-minera').style.display = 'none';
           document.getElementById('seccion-mineria').style.display = 'none';
           document.getElementById('seccion-avanzada').style.display = 'none';
@@ -680,7 +674,7 @@
           idx = { 'no-mineras': 0, 'mineras': 0 };
         } catch (err) {
           console.error('Error detallado:', err);
-          alert('❌ Error al guardar: ' + (err.message || 'Verifica tu conexión y configuración de Supabase.'));
+          alert('❌ Error al guardar: ' + (err.message || 'Revisa la consola (F12) para más detalles.'));
         }
       });
     });
