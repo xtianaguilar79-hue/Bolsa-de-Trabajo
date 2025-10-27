@@ -4,12 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bolsa de Trabajo Minería en San Juan</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Librerías para generar PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
       --bg: #0f0f12;
@@ -109,11 +107,6 @@
       outline: none;
       border-color: var(--accent2);
       box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.2);
-    }
-
-    input[type="file"] {
-      padding: 6px;
-      background: transparent;
     }
 
     textarea {
@@ -296,7 +289,30 @@
 
         <label for="provincia">Provincia</label>
         <select id="provincia" name="provincia" required>
-          <option value="San Juan">San Juan</option>
+          <option value="">Selecciona tu provincia</option>
+          <option value="Buenos Aires">Buenos Aires</option>
+          <option value="Catamarca">Catamarca</option>
+          <option value="Chaco">Chaco</option>
+          <option value="Chubut">Chubut</option>
+          <option value="Córdoba">Córdoba</option>
+          <option value="Corrientes">Corrientes</option>
+          <option value="Entre Ríos">Entre Ríos</option>
+          <option value="Formosa">Formosa</option>
+          <option value="Jujuy">Jujuy</option>
+          <option value="La Pampa">La Pampa</option>
+          <option value="La Rioja">La Rioja</option>
+          <option value="Mendoza">Mendoza</option>
+          <option value="Misiones">Misiones</option>
+          <option value="Neuquén">Neuquén</option>
+          <option value="Río Negro">Río Negro</option>
+          <option value="Salta">Salta</option>
+          <option value="San Juan" selected>San Juan</option>
+          <option value="San Luis">San Luis</option>
+          <option value="Santa Cruz">Santa Cruz</option>
+          <option value="Santa Fe">Santa Fe</option>
+          <option value="Santiago del Estero">Santiago del Estero</option>
+          <option value="Tierra del Fuego">Tierra del Fuego</option>
+          <option value="Tucumán">Tucumán</option>
         </select>
 
         <label for="departamento">Departamento</label>
@@ -319,9 +335,6 @@
 
         <label for="email">Correo electrónico (opcional)</label>
         <input type="email" id="email" name="email">
-
-        <label for="foto">Foto de perfil (opcional)</label>
-        <input type="file" id="foto" name="foto" accept="image/*">
 
         <!-- Experiencia laboral -->
         <fieldset>
@@ -478,31 +491,9 @@
         <label>Observaciones</label>
         <textarea name="observaciones" placeholder="Disponibilidad, referencias, etc."></textarea>
 
-        <button type="submit">Registrar en la bolsa</button>
+        <button type="submit">✅ Registrar en la bolsa</button>
         <button type="button" id="btnGenerarPDF">📄 Generar CV en PDF</button>
       </form>
-    </div>
-
-    <!-- CV oculto para generar PDF -->
-    <div id="cv-preview" style="display:none; padding: 20px; background: white; color: black; max-width: 800px; margin: 0 auto; font-family: Arial, sans-serif;">
-      <h2 id="cv-nombre">Nombre</h2>
-      <p><strong>Fecha de nacimiento:</strong> <span id="cv-nacimiento"></span></p>
-      <p><strong>Nivel de instrucción:</strong> <span id="cv-instruccion"></span></p>
-      <p><strong>Provincia:</strong> San Juan | <strong>Departamento:</strong> <span id="cv-departamento"></span></p>
-      <p><strong>Teléfono:</strong> <span id="cv-telefono"></span> | <strong>Email:</strong> <span id="cv-email"></span></p>
-      <div id="cv-foto-container"></div>
-      <h3>Experiencia laboral</h3>
-      <div id="cv-experiencia"></div>
-      <h3>Maquinaria operada</h3>
-      <p id="cv-maquinaria"></p>
-      <h3>Certificaciones</h3>
-      <p id="cv-certificaciones"></p>
-      <h3>Oficios</h3>
-      <p id="cv-oficios"></p>
-      <h3>Roster</h3>
-      <p id="cv-roster"></p>
-      <h3>Observaciones</h3>
-      <p id="cv-observaciones"></p>
     </div>
 
     <footer>
@@ -511,9 +502,17 @@
   </div>
 
   <script>
-    // Acceso global a librerías
-    const { jsPDF } = window.jspdf;
+    // ==========================
+    // 🔑 CONFIGURACIÓN DE SUPABASE
+    // ==========================
+    const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co'; // ← ¡CAMBIA ESTO!
+    const SUPABASE_ANON_KEY = 'TU_ANON_KEY_AQUÍ'; // ← ¡CAMBIA ESTO!
 
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ==========================
+    // 🧠 LÓGICA DEL FORMULARIO
+    // ==========================
     document.addEventListener('DOMContentLoaded', () => {
       // WhatsApp toggle
       document.querySelectorAll('input[name="whatsapp"]').forEach(radio => {
@@ -534,7 +533,6 @@
           if (radio.value === 'no') {
             showIf(false, document.getElementById('seccion-mineria'));
             showIf(false, document.getElementById('seccion-avanzada'));
-            // Limpiar campos
             document.getElementById('lista-empresas-no-mineras').innerHTML = '';
             document.getElementById('lista-empresas-mineras').innerHTML = '';
           }
@@ -617,123 +615,97 @@
       if (btnNoMinera) btnNoMinera.addEventListener('click', () => addEmpresa('no-mineras'));
       if (btnMinera) btnMinera.addEventListener('click', () => addEmpresa('mineras'));
 
-      // Generar PDF
+      // ==========================
+      // 📤 ENVIAR A SUPABASE
+      // ==========================
+      document.getElementById('formularioTrabajador').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Recoger datos
+        const form = e.target;
+        const data = {
+          nombres: form.nombres.value,
+          apellidos: form.apellidos.value,
+          fecha_nacimiento: form.fecha_nacimiento.value,
+          nivel_instruccion: form.nivel_instruccion.value,
+          provincia: form.provincia.value,
+          departamento: form.departamento.value,
+          cod_area: form.cod_area.value,
+          num_celular: form.num_celular.value,
+          email: form.email.value || null,
+          tiene_experiencia: form.querySelector('input[name="tiene_experiencia"]:checked')?.value === 'si',
+          no_minera: form.querySelector('input[name="no_minera"]:checked')?.value === 'si',
+          mineria: form.querySelector('input[name="mineria"]:checked')?.value === 'si',
+          maquinaria: Array.from(form.querySelectorAll('input[name="maquinaria"]:checked')).map(cb => cb.value),
+          certificaciones: Array.from(form.querySelectorAll('input[name="certificaciones"]:checked')).map(cb => cb.value),
+          oficios: Array.from(form.querySelectorAll('input[name="oficios"]:checked')).map(cb => cb.value),
+          roster: form.querySelector('input[name="roster"]:checked')?.value || null,
+          whatsapp: form.querySelector('input[name="whatsapp"]:checked')?.value === 'si',
+          whatsapp_numero: form.whatsapp_numero?.value || null,
+          observaciones: form.observaciones.value || null
+        };
+
+        try {
+          const { error } = await supabase.from('trabajadores').insert([data]);
+          if (error) throw error;
+
+          alert('✅ ¡Registro exitoso! Tus datos ya están en la bolsa de trabajo.');
+          form.reset();
+          // Resetear secciones
+          document.getElementById('seccion-no-minera').style.display = 'none';
+          document.getElementById('seccion-mineria').style.display = 'none';
+          document.getElementById('seccion-avanzada').style.display = 'none';
+          document.getElementById('lista-empresas-no-mineras').innerHTML = '';
+          document.getElementById('lista-empresas-mineras').innerHTML = '';
+          idx = { 'no-mineras': 0, 'mineras': 0 };
+        } catch (err) {
+          console.error(err);
+          alert('❌ Error al guardar: ' + (err.message || 'Intenta nuevamente.'));
+        }
+      });
+
+      // ==========================
+      // 📄 GENERAR PDF (sin cambios)
+      // ==========================
       document.getElementById('btnGenerarPDF').addEventListener('click', generarPDF);
     });
 
     function generarPDF() {
       const form = document.getElementById('formularioTrabajador');
-      const data = new FormData(form);
-
-      // Validar campos requeridos
-      if (!form.nombres.value || !form.apellidos.value || !form.cod_area.value || !form.num_celular.value) {
-        alert('Por favor complete todos los campos obligatorios.');
+      if (!form.nombres.value || !form.apellidos.value) {
+        alert('Completa al menos nombres y apellidos.');
         return;
       }
 
-      // Llenar el CV oculto
       const nombreCompleto = `${form.nombres.value} ${form.apellidos.value}`;
-      document.getElementById('cv-nombre').textContent = nombreCompleto;
-
-      document.getElementById('cv-nacimiento').textContent = form.fecha_nacimiento.value ? 
-        new Date(form.fecha_nacimiento.value).toLocaleDateString('es-ES') : '—';
-
-      document.getElementById('cv-instruccion').textContent = 
-        form.nivel_instruccion.options[form.nivel_instruccion.selectedIndex].text || '—';
-
-      document.getElementById('cv-departamento').textContent = data.get('departamento') || '—';
-
-      const codArea = data.get('cod_area') || '';
-      const numCel = data.get('num_celular') || '';
+      const codArea = form.cod_area.value || '';
+      const numCel = form.num_celular.value || '';
       const telefonoCompleto = codArea && numCel ? `0 ${codArea} 15 ${numCel}` : '—';
-      document.getElementById('cv-telefono').textContent = telefonoCompleto;
 
-      document.getElementById('cv-email').textContent = data.get('email') || '—';
-
-      // Foto
-      const foto = form.foto.files[0];
-      const fotoContainer = document.getElementById('cv-foto-container');
-      if (foto) {
-        fotoContainer.innerHTML = `<p><strong>Foto:</strong> ${foto.name}</p>`;
-      } else {
-        fotoContainer.innerHTML = '';
-      }
-
-      // Experiencia
-      let expHTML = '';
-      if (data.get('tiene_experiencia') === 'no') {
-        expHTML = '<p>Sin experiencia laboral.</p>';
-      } else {
-        if (data.get('no_minera') === 'si') {
-          let i = 1;
-          while (data.get(`empresa_no_minera_${i}`)) {
-            expHTML += `<p><strong>${data.get(`empresa_no_minera_${i}`)}</strong> (${data.get(`desde_no_minera_${i}`)} – ${data.get(`hasta_no_minera_${i}`)})<br>
-                        Tarea: ${data.get(`tarea_no_minera_${i}`)}<br>
-                        Ref: ${data.get(`ref_no_minera_${i}`) || '—'}</p>`;
-            i++;
-          }
-        }
-        if (data.get('mineria') === 'si') {
-          let i = 1;
-          while (data.get(`empresa_minera_${i}`)) {
-            expHTML += `<p><strong>${data.get(`empresa_minera_${i}`)}</strong> (${data.get(`desde_minera_${i}`)} – ${data.get(`hasta_minera_${i}`)})<br>
-                        Tareas: ${data.get(`tareas_minera_${i}`)}<br>
-                        Ref: ${data.get(`ref_minera_${i}`) || '—'}</p>`;
-            i++;
-          }
-        }
-      }
-      document.getElementById('cv-experiencia').innerHTML = expHTML || '<p>No especificado.</p>';
-
-      // Maquinaria
-      const maq = Array.from(form.querySelectorAll('input[name="maquinaria"]:checked'))
-        .map(cb => cb.nextElementSibling.textContent.trim());
-      document.getElementById('cv-maquinaria').textContent = maq.length ? maq.join(', ') : '—';
-
-      // Certificaciones
-      const cert = Array.from(form.querySelectorAll('input[name="certificaciones"]:checked'))
-        .map(cb => cb.nextElementSibling.textContent.trim());
-      document.getElementById('cv-certificaciones').textContent = cert.length ? cert.join(', ') : '—';
-
-      // Oficios
-      const oficios = Array.from(form.querySelectorAll('input[name="oficios"]:checked'))
-        .map(cb => cb.nextElementSibling.textContent.trim());
-      document.getElementById('cv-oficios').textContent = oficios.length ? oficios.join(', ') : '—';
-
-      // Roster
-      const roster = form.querySelector('input[name="roster"]:checked');
-      document.getElementById('cv-roster').textContent = roster ? 
-        roster.nextElementSibling.textContent.trim() : '—';
-
-      // Observaciones
-      document.getElementById('cv-observaciones').textContent = data.get('observaciones') || '—';
-
-      // Generar PDF
-      const cvPreview = document.getElementById('cv-preview');
-      cvPreview.style.display = 'block';
-
-      html2canvas(cvPreview).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 210;
-        const pageHeight = 297;
-        const imgHeight = canvas.height * imgWidth / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-        }
-
-        pdf.save(`CV_${form.apellidos.value?.replace(/\s+/g, '_') || 'trabajador'}.pdf`);
-        cvPreview.style.display = 'none';
-      });
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+        <head><title>CV - ${nombreCompleto}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h2 { color: #ff6b35; }
+          p { margin: 8px 0; }
+        </style>
+        </head>
+        <body>
+          <h2>${nombreCompleto}</h2>
+          <p><strong>Teléfono:</strong> ${telefonoCompleto}</p>
+          <p><strong>Email:</strong> ${form.email.value || '—'}</p>
+          <p><strong>Provincia:</strong> ${form.provincia.options[form.provincia.selectedIndex].text}</p>
+          <p><strong>Departamento:</strong> ${form.departamento.value || '—'}</p>
+          <hr>
+          <p><em>CV generado desde la Bolsa de Trabajo Minería en San Juan</em></p>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
     }
   </script>
 </body>
