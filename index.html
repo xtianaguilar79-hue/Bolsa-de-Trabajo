@@ -167,7 +167,7 @@
       height: 18px;
     }
 
-    button[type="submit"], #btnGenerarPDF {
+    button[type="submit"] {
       background: linear-gradient(135deg, var(--accent), #ff8c42);
       color: white;
       border: none;
@@ -183,7 +183,7 @@
       letter-spacing: 0.5px;
     }
 
-    button[type="submit"]:hover, #btnGenerarPDF:hover {
+    button[type="submit"]:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
     }
@@ -211,6 +211,20 @@
       border-radius: 14px;
       margin-top: 16px;
       border: 1px solid var(--border);
+      position: relative;
+    }
+
+    .btn-eliminar {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
     }
 
     footer {
@@ -492,16 +506,11 @@
         <textarea name="observaciones" placeholder="Disponibilidad, referencias, etc."></textarea>
 
         <button type="submit">✅ Registrar en la bolsa</button>
-        <button type="button" id="btnGenerarPDF">📄 Generar CV en PDF</button>
       </form>
     </div>
 
     <footer>
-       © 2025 Bolsa de Trabajo Minería en San Juan
-  <br>
-  <a href="/empresas.html" style="color: var(--accent2); text-decoration: underline;">
-    Área de empresas
-  </a>
+      © 2025 Bolsa de Trabajo Minería en San Juan — Plataforma inteligente para el talento minero
     </footer>
   </div>
 
@@ -509,8 +518,8 @@
     // ==========================
     // 🔑 CONFIGURACIÓN DE SUPABASE
     // ==========================
-    const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co'; // ← ¡CAMBIA ESTO!
-    const SUPABASE_ANON_KEY = 'TU_ANON_KEY_AQUÍ'; // ← ¡CAMBIA ESTO!
+    const SUPABASE_URL = 'https://xxxxxx.supabase.co'; // ← ¡REEMPLAZA POR TU URL!
+    const SUPABASE_ANON_KEY = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; // ← ¡REEMPLAZA POR TU CLAVE!
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -590,21 +599,29 @@
         div.className = 'experience-section';
         const n = ++idx[type];
 
+        // Botón eliminar
+        const btnEliminar = document.createElement('button');
+        btnEliminar.className = 'btn-eliminar';
+        btnEliminar.textContent = '✕';
+        btnEliminar.onclick = () => div.remove();
+
+        div.appendChild(btnEliminar);
+
         if (type === 'no-mineras') {
-          div.innerHTML = `
+          div.innerHTML += `
             <h3>Empresa ${n}</h3>
             <label>Nombre</label><input type="text" name="empresa_no_minera_${n}" required>
             <label>Tarea</label><input type="text" name="tarea_no_minera_${n}" required>
             <label>Desde <small>(MM/AAAA)</small></label><input type="month" name="desde_no_minera_${n}" required>
-            <label>Hasta <small>(MM/AAAA o "actual")</small></label><input type="text" name="hasta_no_minera_${n}" placeholder="actual" required>
+            <label>Hasta <small>(MM/AAAA)</small></label><input type="month" name="hasta_no_minera_${n}" required>
             <label>Referencias</label><input type="text" name="ref_no_minera_${n}" placeholder="Tel o email">
           `;
         } else if (type === 'mineras') {
-          div.innerHTML = `
+          div.innerHTML += `
             <h3>Empresa Minera ${n}</h3>
             <label>Nombre</label><input type="text" name="empresa_minera_${n}" required>
             <label>Desde <small>(MM/AAAA)</small></label><input type="month" name="desde_minera_${n}" required>
-            <label>Hasta <small>(MM/AAAA o "actual")</small></label><input type="text" name="hasta_minera_${n}" placeholder="actual" required>
+            <label>Hasta <small>(MM/AAAA)</small></label><input type="month" name="hasta_minera_${n}" required>
             <label>Tareas en minería</label><textarea name="tareas_minera_${n}" required></textarea>
             <label>Referencias</label><input type="text" name="ref_minera_${n}" placeholder="supervisor@minera.com">
           `;
@@ -625,7 +642,6 @@
       document.getElementById('formularioTrabajador').addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Recoger datos
         const form = e.target;
         const data = {
           nombres: form.nombres.value,
@@ -663,54 +679,11 @@
           document.getElementById('lista-empresas-mineras').innerHTML = '';
           idx = { 'no-mineras': 0, 'mineras': 0 };
         } catch (err) {
-          console.error(err);
-          alert('❌ Error al guardar: ' + (err.message || 'Intenta nuevamente.'));
+          console.error('Error detallado:', err);
+          alert('❌ Error al guardar: ' + (err.message || 'Verifica tu conexión y configuración de Supabase.'));
         }
       });
-
-      // ==========================
-      // 📄 GENERAR PDF (sin cambios)
-      // ==========================
-      document.getElementById('btnGenerarPDF').addEventListener('click', generarPDF);
     });
-
-    function generarPDF() {
-      const form = document.getElementById('formularioTrabajador');
-      if (!form.nombres.value || !form.apellidos.value) {
-        alert('Completa al menos nombres y apellidos.');
-        return;
-      }
-
-      const nombreCompleto = `${form.nombres.value} ${form.apellidos.value}`;
-      const codArea = form.cod_area.value || '';
-      const numCel = form.num_celular.value || '';
-      const telefonoCompleto = codArea && numCel ? `0 ${codArea} 15 ${numCel}` : '—';
-
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-        <head><title>CV - ${nombreCompleto}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h2 { color: #ff6b35; }
-          p { margin: 8px 0; }
-        </style>
-        </head>
-        <body>
-          <h2>${nombreCompleto}</h2>
-          <p><strong>Teléfono:</strong> ${telefonoCompleto}</p>
-          <p><strong>Email:</strong> ${form.email.value || '—'}</p>
-          <p><strong>Provincia:</strong> ${form.provincia.options[form.provincia.selectedIndex].text}</p>
-          <p><strong>Departamento:</strong> ${form.departamento.value || '—'}</p>
-          <hr>
-          <p><em>CV generado desde la Bolsa de Trabajo Minería en San Juan</em></p>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-    }
   </script>
 </body>
 </html>
